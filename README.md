@@ -78,9 +78,14 @@ python manage.py createsuperuser
 
 
 # SCREENSHOTS
-<img width="1229" height="831" alt="Ekran Resmi 2026-01-12 14 12 57" src="https://github.com/user-attachments/assets/1fe88ad0-4db5-427e-815c-167bae9f227b" />
-<img width="1229" height="831" alt="Ekran Resmi 2026-01-12 14 12 48" src="https://github.com/user-attachments/assets/4328ed07-02f4-4c71-854a-ad6db2f2819f" />
-<img width="1229" height="831" alt="Ekran Resmi 2026-01-12 14 12 42" src="https://github.com/user-attachments/assets/6f6bdfa0-124b-4813-948b-0cd92ccff19d" />
-<img width="1229" height="831" alt="Ekran Resmi 2026-01-12 14 12 30" src="https://github.com/user-attachments/assets/9dd2b7ac-ee86-4d1b-92b0-d7b6f1e3294b" />
-<img width="1229" height="831" alt="Ekran Resmi 2026-01-12 14 11 58" src="https://github.com/user-attachments/assets/3dbaeb18-d008-48f2-8ca1-dfd44e41a88a" />
+
+<img width="1229" height="831" alt="Ekran Resmi 2026-01-12 14 11 58" src="https://github.com/user-attachments/assets/7b0add59-a5fa-47c3-93fd-a1f562e30bba" />
+
+<img width="1229" height="831" alt="Ekran Resmi 2026-01-12 14 12 30" src="https://github.com/user-attachments/assets/3c07bc93-6fee-4e03-aacf-1cd1fca5d72e" />
+
+<img width="1229" height="831" alt="Ekran Resmi 2026-01-12 14 12 42" src="https://github.com/user-attachments/assets/7543b07b-86d7-41f6-ad43-14ab0dc5227e" />
+
+<img width="1229" height="831" alt="Ekran Resmi 2026-01-12 14 12 48" src="https://github.com/user-attachments/assets/a0d18872-92c7-4863-ade0-549e330dde48" />
+
+<img width="1229" height="831" alt="Ekran Resmi 2026-01-12 14 12 57" src="https://github.com/user-attachments/assets/107a12c7-094d-43d2-8997-f05d7d1c49cd" />
 
