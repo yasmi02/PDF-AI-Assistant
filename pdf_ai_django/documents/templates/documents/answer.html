@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete {{ document.title }} - PDF AI Assistant{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title text-danger">
+                    <i class="fas fa-exclamation-triangle"></i> Confirm Deletion
+                </h3>
+                
+                <p>Are you sure you want to delete <strong>{{ document.title }}</strong>?</p>
+                
+                <div class="alert alert-warning">
+                    <strong>Warning:</strong> This will delete:
+                    <ul>
+                        <li>The PDF file</li>
+                        <li>All {{ document.num_chunks }} text chunks</li>
+                        <li>All questions asked about this document</li>
+                        <li>The document summary (if exists)</li>
+                    </ul>
+                    This action cannot be undone!
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Yes, Delete It
+                    </button>
+                    <a href="{% url 'document_detail' document.pk %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

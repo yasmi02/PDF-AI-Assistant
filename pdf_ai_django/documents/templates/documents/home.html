@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Home - PDF AI Assistant{% endblock %}
+
+{% block content %}
+
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <i class="fas fa-file-pdf"></i>
+            <h3>{{ total_docs }}</h3>
+            <p>PDFs Uploaded</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <i class="fas fa-question-circle"></i>
+            <h3>{{ total_questions }}</h3>
+            <p>Questions Asked</p>
+        </div>
+    </div>
+   <div class="col-md-4">
+    <div class="stat-card">
+        <i class="fas fa-robot"></i>
+        <h3>🦙</h3>
+        <p>Powered by Ollama</p>
+    </div>
+</div>
+</div>
+
+<div class="row">
+    <!-- Upload Section -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title">
+    <i class="fas fa-cloud-upload-alt" style="color: #ff69b4;"></i> Upload PDF
+</h3>
+                <p class="text-muted">Upload a PDF document (max 100MB)</p>
+                
+                <form method="post" action="{% url 'upload_pdf' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ upload_form|crispy }}
+                    <button type="submit" class="btn btn-primary btn-lg w-100 mt-3">
+                        <i class="fas fa-upload"></i> Upload & Process
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Recent Documents -->
+        {% if recent_docs %}
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-clock"></i> Recent Documents</h5>
+                <div class="list-group list-group-flush">
+                    {% for doc in recent_docs %}
+                    <a href="{% url 'document_detail' doc.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-file-pdf text-danger"></i>
+                                <strong>{{ doc.title }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    {{ doc.num_pages }} pages • {{ doc.num_chunks }} chunks
+                                </small>
+                            </div>
+                            <span class="badge bg-primary">{{ doc.uploaded_at|timesince }} ago</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                <a href="{% url 'document_list' %}" class="btn btn-sm btn-outline-primary mt-3">
+                    View All Documents <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Ask Questions Section -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title">
+    <i class="fas fa-comments" style="color: #ff69b4;"></i> Ask Questions
+</h3>
+                <p class="text-muted">Ask anything about your uploaded documents</p>
+                
+                <form method="post" action="{% url 'ask_question' %}" id="questionForm">
+                    {% csrf_token %}
+                    {{ question_form|crispy }}
+                    <button type="submit" class="btn btn-primary btn-lg w-100 mt-3">
+    <i class="fas fa-paper-plane"></i> Ask Question
+</button>
+                </form>
+                
+                <div id="answerSection" class="mt-4" style="display: none;">
+                    <div class="alert alert-success">
+                        <h5><i class="fas fa-check-circle"></i> Answer:</h5>
+                        <p id="answerText"></p>
+                        <hr>
+                        <small><strong>Sources:</strong> <span id="sourcesText"></span></small>
+                        <br>
+                        <small><strong>Response time:</strong> <span id="responseTime"></span>s</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Questions -->
+        {% if recent_questions %}
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-history"></i> Recent Questions</h5>
+                <div class="list-group list-group-flush">
+                    {% for q in recent_questions %}
+                    <div class="list-group-item">
+                        <strong class="text-primary">Q:</strong> {{ q.question_text|truncatewords:15 }}
+                        <br>
+                        <strong class="text-success">A:</strong> {{ q.answer_text|truncatewords:20 }}
+                        <br>
+                        <small class="text-muted">{{ q.asked_at|timesince }} ago</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                <a href="{% url 'question_history' %}" class="btn btn-sm btn-outline-primary mt-3">
+                    View All Questions <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('questionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const answerSection = document.getElementById('answerSection');
+    const button = this.querySelector('button[type="submit"]');
+    
+    // Show loading
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Thinking...';
+    
+    fetch('{% url "ask_question" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('answerText').textContent = data.answer;
+            document.getElementById('sourcesText').textContent = data.sources.join(', ');
+            document.getElementById('responseTime').textContent = data.response_time.toFixed(2);
+            answerSection.style.display = 'block';
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error);
+    })
+    .finally(() => {
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-paper-plane"></i> Ask Question';
+    });
+});
+</script>
+{% endblock %}

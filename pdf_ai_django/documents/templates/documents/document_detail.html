@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ document.title }} - Chat{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        padding-top: 60px;
+    }
+    .chat-container {
+        display: flex;
+        height: calc(100vh - 60px);
+        background: white;
+    }
+    .sidebar {
+        width: 250px;
+        background: #f8f9fa;
+        border-right: 1px solid #e0e0e0;
+        padding: 20px;
+        overflow-y: auto;
+    }
+    .sidebar h6 {
+        color: #666;
+        font-size: 12px;
+        text-transform: uppercase;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+    .sidebar-item {
+        padding: 10px 15px;
+        margin-bottom: 5px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #333;
+        text-decoration: none;
+    }
+    .sidebar-item:hover {
+        background: #e9ecef;
+    }
+    .sidebar-item.active {
+        background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+        color: white;
+    }
+    .chat-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: white;
+    }
+    .chat-header {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e0e0e0;
+        background: white;
+    }
+    .chat-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 30px;
+        background: #fafafa;
+    }
+    .chat-input-area {
+        padding: 20px 30px;
+        border-top: 1px solid #e0e0e0;
+        background: white;
+    }
+    .summary-box {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #e0e0e0;
+    }
+    .message-bubble {
+        margin-bottom: 20px;
+        animation: fadeIn 0.3s;
+    }
+    .user-message {
+        text-align: right;
+    }
+    .user-message .bubble {
+        display: inline-block;
+        background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 18px 18px 4px 18px;
+        max-width: 70%;
+        text-align: left;
+    }
+    .ai-message .bubble {
+        display: inline-block;
+        background: white;
+        border: 1px solid #e0e0e0;
+        padding: 15px 20px;
+        border-radius: 18px 18px 18px 4px;
+        max-width: 70%;
+    }
+    .chat-input {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .chat-input textarea {
+        flex: 1;
+        border: 1px solid #e0e0e0;
+        border-radius: 20px;
+        padding: 12px 20px;
+        resize: none;
+        font-size: 14px;
+    }
+    .chat-input textarea:focus {
+        outline: none;
+        border-color: #ff69b4;
+    }
+    .send-btn {
+        background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+        color: white;
+        border: none;
+        border-radius: 20px;
+        padding: 12px 30px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    .send-btn:hover {
+        transform: scale(1.05);
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h6>Navigation</h6>
+        <a href="{% url 'home' %}" class="sidebar-item">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="{% url 'document_list' %}" class="sidebar-item">
+            <i class="fas fa-folder"></i>
+            <span>All Documents</span>
+        </a>
+        <a href="{% url 'question_history' %}" class="sidebar-item">
+            <i class="fas fa-history"></i>
+            <span>Chat History</span>
+        </a>
+
+        <h6 class="mt-4">Current Document</h6>
+        <a href="#" class="sidebar-item active">
+            <i class="fas fa-file-pdf"></i>
+            <span>{{ document.title|truncatewords:3 }}</span>
+        </a>
+
+        <h6 class="mt-4">Actions</h6>
+        <a href="{{ document.file.url }}" class="sidebar-item" target="_blank">
+            <i class="fas fa-download"></i>
+            <span>Download PDF</span>
+        </a>
+        <a href="{% url 'delete_document' document.pk %}" class="sidebar-item text-danger">
+            <i class="fas fa-trash"></i>
+            <span>Delete</span>
+        </a>
+
+        <div class="mt-4 p-3" style="background: white; border-radius: 8px; font-size: 12px;">
+            <div><strong>Pages:</strong> {{ document.num_pages }}</div>
+            <div><strong>Chunks:</strong> {{ document.num_chunks }}</div>
+            <div><strong>Uploaded:</strong> {{ document.uploaded_at|date:"M d" }}</div>
+        </div>
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="chat-main">
+        <!-- Header -->
+        <div class="chat-header">
+            <h5 class="mb-1">
+                <i class="fas fa-file-pdf text-danger"></i> {{ document.title }}
+            </h5>
+            <small class="text-muted">{{ document.num_pages }} pages • {{ document.num_chunks }} chunks</small>
+        </div>
+
+        <!-- Chat Content -->
+        <div class="chat-content">
+            <!-- Summary -->
+            {% if summary %}
+            <div class="summary-box">
+                <h6 style="color: #ff69b4; margin-bottom: 15px;">
+                    <i class="fas fa-robot"></i> AI Summary
+                </h6>
+                <p class="mb-0" style="color: #333; line-height: 1.6;">{{ summary.summary_text }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Chat Messages -->
+            {% for q in questions %}
+            <div class="message-bubble user-message">
+                <div class="bubble">
+                    <strong>You:</strong><br>
+                    {{ q.question_text }}
+                </div>
+                <div style="font-size: 11px; color: #999; margin-top: 5px;">
+                    {{ q.asked_at|timesince }} ago
+                </div>
+            </div>
+
+            <div class="message-bubble ai-message">
+                <div class="bubble">
+                    <strong style="color: #ff69b4;">AI:</strong><br>
+                    {{ q.answer_text }}
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Empty State -->
+            {% if not questions and not summary %}
+            <div class="text-center py-5">
+                <i class="fas fa-comments fa-3x mb-3" style="color: #ff69b4;"></i>
+                <h5>Start chatting with your document!</h5>
+                <p class="text-muted">Ask any question below</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Chat Input -->
+        <form method="post" action="{% url 'ask_question' %}" id="chatForm">
+    {% csrf_token %}
+    <!-- Document ID'yi gönder -->
+    <input type="hidden" name="document" value="{{ document.pk }}">
+    <input type="hidden" name="top_k" value="5">
+
+    <div class="chat-input">
+        <textarea
+            name="question"
+            placeholder="Send a message..."
+            rows="1"
+            required
+        ></textarea>
+        <button type="submit" class="send-btn">
+            <i class="fas fa-paper-plane"></i> Send
+        </button>
+    </div>
+</form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-scroll to bottom
+const chatContent = document.querySelector('.chat-content');
+chatContent.scrollTop = chatContent.scrollHeight;
+
+// Handle form submission
+document.getElementById('chatForm').addEventListener('submit', function(e) {
+    const button = this.querySelector('.send-btn');
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Thinking...';
+});
+
+// Auto-expand textarea
+const textarea = document.querySelector('textarea[name="question"]');
+textarea.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+});
+</script>
+{% endblock %}

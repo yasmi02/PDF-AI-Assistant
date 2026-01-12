@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Question History - PDF AI Assistant{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title mb-4">
+                    <i class="fas fa-history"></i> All Questions
+                </h2>
+                
+                {% if questions %}
+                {% for q in questions %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <h5 class="text-primary">Q: {{ q.question_text }}</h5>
+                            <small class="text-muted">{{ q.asked_at|timesince }} ago</small>
+                        </div>
+                        <p class="mt-2">A: {{ q.answer_text }}</p>
+                        <hr>
+                        <small>
+                            {% if q.document %}
+                            <strong>Document:</strong> 
+                            <a href="{% url 'document_detail' q.document.pk %}">{{ q.document.title }}</a>
+                            {% else %}
+                            <strong>Document:</strong> All documents
+                            {% endif %}
+                            {% if q.response_time %}
+                            • <strong>Response time:</strong> {{ q.response_time|floatformat:2 }}s
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No questions asked yet.</p>
+                    <a href="{% url 'home' %}" class="btn btn-primary">
+                        <i class="fas fa-comments"></i> Ask Your First Question
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

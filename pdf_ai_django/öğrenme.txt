@@ -1,0 +1,188 @@
+RAG işlemi
+question = "Blabla?"
+question_vector = [0.23, -0.45, 0.67, ...]  # 384 boyutlu vektör
+
+similar_chunks = vector_store.search(question_vector, top_k=5)
+context = """
+[Chunk 1]:blablabla...
+
+[Chunk 2]:bla ve more bla...
+
+[Chunk 3]: daha çok blablabaaaaa
+"""
+answer = ollama.generate(prompt)
+
+#dosya rolleri?
+class PDFLoader:
+    """PDF'i okur, temizler, parçalar"""
+
+    def extract_text(self):
+        # PyPDF2 veya pdfplumber ile PDF oku
+        # Her sayfayı text'e çevir
+        return "PDF'teki tüm metin..."
+
+         def chunk_text(self, text, chunk_size=1000):
+
+# vector_store.py olayı:
+vector store, metinleri (PDF’ten gelen parçaları) sayısal vektörlere (embedding) çevirip bunları bir veritabanında saklayan sonra da “anlama dayalı” arama yapmanı sağlayan sistemdir
+vector store:
+“bu soru PDF’in neresini ilgilendiriyor?” sorusunun cevabını bulur
+
+# add_documents(self, chunks) ne yapar?
+
+def add_documents(self, chunks):
+chunk nedir?
+pdfin sayfa sayfa ya da 300–500 tokenlik parçalara bölünmüş hali
+
+her chunk -> embedding model ile vektöre çevrilir
+
+qa_engine.py - question ask:
+prompt = f"Context: {context}\n\nSoru: {question}\n\nCevap:" (bu satır AI davranışını belirler)
+
+ollamaya gönderme: answer = self.ollama.generate(prompt)
+
+cevap döndürme: return answer
+
+# models.py (bu bi django database yapısı)
+class PDFDocument(models.Model):
+    """Her PDF için bir kayıt"""
+    title = models.CharField(max_length=255)       # Başlık
+    file = models.FileField(upload_to='pdfs/')     # PDF dosyası
+    num_pages = models.IntegerField(default=0)     # Sayfa sayısı
+    num_chunks = models.IntegerField(default=0)    # Parça sayısı
+    processed = models.BooleanField(default=False) # İşlendi mi?
+
+ # views.py (django iş mantığı!!!!!)
+ def upload_pdf(request):
+    """PDF yükleme işlemi"""
+
+    if request.method == 'POST':
+        # 1. Form'dan dosyayı al
+        form = PDFUploadForm(request.POST, request.FILES)
+
+        # 2. Validate et
+        if form.is_valid():
+            # 3. Database'e kaydet
+            pdf_doc = form.save()
+
+            # 4. İşle (PDF → chunks → embeddings → vector DB)
+            process_pdf(pdf_doc)
+
+            # 5. Özet oluştur
+            generate_summary(pdf_doc)
+
+            # 6. Chat sayfasına yönlendir
+            return redirect('document_detail', pk=pdf_doc.pk)
+
+# forms.py = veri doğrulama
+class PDFUploadForm(forms.ModelForm):
+    """PDF yükleme formu"""
+
+    class Meta:
+        model = PDFDocument
+        fields = ['file']
+
+    def clean_file(self):
+        """Dosya doğrulama"""
+        file = self.cleaned_data.get('file')
+
+        # PDF mi kontrol et
+        if not file.name.endswith('.pdf'):
+            raise ValidationError('Sadece PDF!')
+
+        # Boyut kontrolü
+        if file.size > 100 * 1024 * 1024:  # 100MB
+            raise ValidationError('Çok büyük!')
+
+        return file
+
+!!!!Form Olmadan:
+python# ❌ Manuel validation (hataya açık)
+file = request.FILES.get('file')
+if not file:
+    return "Dosya yok!"
+if file.size > 100000000:
+    return "Çok büyük!"
+# ... daha çok kod
+Form İle:
+python# ✅ Otomatik validation
+form = PDFUploadForm(request.POST, request.FILES)
+if form.is_valid():
+    form.save()  # Hepsi halloldu!
+
+# widget yapımı
+
+class QuestionForm(forms.Form):
+    question = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',  # CSS class
+            'rows': 3,  # Yükseklik
+            'placeholder': 'Ask a question...',  # Placeholder
+            'style': 'border-radius: 15px;',  # Inline CSS
+        }),
+        label='Your Question',  # Label text
+        help_text='Max 1000 characters',  # Yardım metni
+        required=True,  # Zorunlu mu?
+    )
+
+# view form kullanımı
+
+# GET Request - Boş form göster
+if request.method == 'GET':
+    form = PDFUploadForm()
+    return render(request, 'upload.html', {'form': form})
+
+# POST Request - Form'u işle
+if request.method == 'POST':
+    form = PDFUploadForm(request.POST, request.FILES)
+
+    if form.is_valid():
+        # ✅ Validation başarılı
+        pdf_doc = form.save()  # Database'e kaydet
+        return redirect('success')
+    else:
+        # ❌ Validation başarısız
+        # form.errors içinde hatalar var
+        return render(request, 'upload.html', {'form': form})
+
+#HTML İÇİN
+ <!-- base.html - Ana şablon -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Default Title{% endblock %}</title>
+</head>
+<body>
+    <nav><!-- Navbar --></nav>
+
+    {% block content %}
+    <!-- Her sayfa buraya içerik koyar -->
+    {% endblock %}
+
+    <footer><!-- Footer --></footer>
+</body>
+</html> (footer kullanmayacağım ama kalsın)
+
+<!-- home.html - Extends base -->
+{% extends 'base.html' %}
+
+{% block title %}Home Page{% endblock %}
+
+{% block content %}
+    <h1>Welcome!</h1>
+    <p>This is home page</p>
+{% endblock %}
+
+
+- return redirect('home') = bi hata oldu mu hemen ana sayfaya dönsün
+
+ <!-- html başlığı -->
+
+ pk = pk anlamıııı ; parametre adı = değişken değeri
+ Sol taraf: URL pattern'deki parametre adı
+Sağ taraf: View'daki değişkenin değeri
+
+{% endblock %} (htmlelerin en sonuna hep şundan koy)
+
+STATIC dosyasını sakın silme!! silince program çalışmıyor :(((
+
